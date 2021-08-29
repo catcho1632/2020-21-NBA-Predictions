@@ -1,0 +1,61 @@
+# Assignment 1
+## by Catherine Cho
+
+### Introduction
+The following data was drawn from FiveThirtyEight, which attempts to predict NBA game outcome by ranking team. The latest ranking methodology is a result of mutliple iterations over a period of several years. Initially, teams were ranked using the Elo system, which tracks the teams winning history and margin of victory but it fails to account for the signing on of new members or loss of members (whether due to injuries or rest) and it's impact on overall team ranking. All Elo results are based on on-court results and the system would take time to update and reflect the talent lost or gained via team ranking. The methodology was further developed using the Elo system but again, the issue was not resolved in capturing other major factors such as a mega-talented teams that are known to pull back in effort towards the end of a regular season. The methodology moved away from Elo system altogether and adopted a new projection algorithm, "CARMELO", which ranks teams based on the current level of talent on the roster.
+
+FiveThirtyEight's RAPTOR metric, which stands for Robust Algorithm (using) Player Tracking (and) On/Off Ratings. The player's performance history is used as a template to predict how the player may perform in  the future. Then the player is ranked for offensive and defensive ratings for the next several seasons, which will effect the player's influence on the overall team rating. Using this model, each player is rated per 100 possessions. See the link below for more information on the methodology. 
+
+https://fivethirtyeight.com/methodology/how-our-nba-predictions-work/
+
+### Current Projection Methodology
+The current methodology uses both the Elo system as well as the Raptor method. Through FiveThirtyEight's extensive testing, giving Elo and Raptor a 35% weight to the overall team ranking has yielded the best predictive results. Although this perecentage varies depending on the current roster and how much the current roster contributes to the Elo rating.  
+
+### Purpose
+This report will look at both the original Elo rating as well as the current Raptor rating system and compare against each team's outcome per game in the 2020-21 season. 
+
+```{r}
+library(readr)
+urlfile<-"https://projects.fivethirtyeight.com/nba-model/nba_elo_latest.csv"
+forecast<-read_csv(url(urlfile))
+
+```
+
+### Subsetting data to obtain a  dataframe of Elo v. Raptor probablity per game
+
+```{r}
+comparison<-subset(forecast,select=c(team1,team2,elo_prob1,elo_prob2,raptor_prob1,raptor_prob2,score1,score2))
+summary(comparison)
+
+```
+
+### Filtering through dataframe "comparison" to report when team 1 wins vs. team 2
+
+```{r}
+library("dplyr")
+#subset of data when team1 wins
+team1wins<-filter(comparison,score1>score2)
+#subset of data when team2 wins
+team2wins<-filter(comparison,score2>score1)
+
+```
+
+### Calculation of when the Elo system  predicts correctly or when Raptor predicts correctly. 
+```{r}
+#percentage of when Elo gets the prediction correct
+elo_team1_correct<-filter(team1wins,elo_prob1>elo_prob2)
+elo_team2_correct<-filter(team2wins,elo_prob1>elo_prob2)
+elo_correct<-nrow(elo_team1_correct)+nrow(elo_team2_correct)
+elo_percentage_correct<-(elo_correct/nrow(comparison))*100
+cat("The percentage of when the Elo system predicts correctly is",elo_percentage_correct,"%")
+
+#percentage of when raptor gets the prediction correct
+raptor_team1_correct<-filter(team1wins,raptor_prob1>raptor_prob2)
+raptor_team2_correct<-filter(team2wins,raptor_prob1>raptor_prob2)
+raptor_correct<-nrow(raptor_team1_correct)+nrow(raptor_team2_correct)
+raptor_percentage_correct<-(raptor_correct/nrow(comparison))*100
+cat("The percentage of when the Raptor rating system predicts correctly is",raptor_percentage_correct,"%")
+```
+
+### Concluding Remarks
+There are many factors to  consider when designing a predictive model of NBA game outcomes. The Roster and individual  player history will make significant impact on the Elo system versus the Raptor system and due to its volatile nature, the data scientist will have to make case by case decision on the appropriate model for the dataset collected. In this case, when analyzing the Raptor and Elo separately, the Elo has a higher percentage of correct predictions than Raptor. This may be a result of analyzing a dataset for 2020-2021 only and may have to do with the specific players in the roster for those years. 
